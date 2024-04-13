@@ -322,6 +322,18 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        user = g.user
+        
+        #list of user's messages.
+        #can access message id, text, timestamp & user_id columns
+        user_messages = user.messages
+        print("Here are my messages: ", user_messages)
+
+        #list of users I am following.
+        #can access message id, username, emai, messages, etc..        
+        user_following = user.following
+        print("Here are the people I am following: ", user_following)
+        print("Here are the messages of someone I am following: ", user_following[1].messages)
 
         return render_template('home.html', messages=messages)
 
