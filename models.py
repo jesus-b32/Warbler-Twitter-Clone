@@ -168,6 +168,19 @@ class User(db.Model):
                 return user
 
         return False
+    
+    @classmethod
+    def check_password(cls, username, password):
+        """Check if entered password by user matches passord stored.
+
+        This is a class method (call it on the class, not an individual user.)
+        It checks if the password entered by user whose password hash matches this password. Returns true if matches and false if it does not.
+        """
+
+        user = cls.query.filter_by(username=username).first()
+
+        if user:
+            return bcrypt.check_password_hash(user.password, password)
 
 
 class Message(db.Model):
