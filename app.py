@@ -317,11 +317,6 @@ def homepage():
     """
 
     if g.user:
-        messages = (Message
-                    .query
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
         user = g.user
         
         #list of user's messages.
@@ -329,11 +324,17 @@ def homepage():
         user_messages = user.messages
         print("Here are my messages: ", user_messages)
 
-        #list of users I am following.
+        #list of users current user is following.
         #can access message id, username, emai, messages, etc..        
         user_following = user.following
-        print("Here are the people I am following: ", user_following)
-        print("Here are the messages of someone I am following: ", user_following[1].messages)
+        user_following_ids = [user.id for user in user_following]
+        
+        messages = (Message
+                    .query
+                    .filter((Message.user_id.in_(user_following_ids)) | (Message.user_id == user.id))
+                    .order_by(Message.timestamp.desc())
+                    .limit(100)
+                    .all())
 
         return render_template('home.html', messages=messages)
 
