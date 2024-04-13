@@ -30,10 +30,15 @@ connect_db(app)
 # User signup/login/logout
 
 
+#@app.before_request is a decorator used to register a function that is run before each request.
+# When a request is received, Flask first calls any functions registered with @app.before_request (if any exist), and then proceeds to process the request.
+# This feature is useful for tasks that need to be performed before each request, such as setting up a database connection, checking user authentication, or setting a custom logging object.
 @app.before_request
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
 
+    # g is a special object in Flask used as a "generic data bucket" to share information across multiple requests.
+    #This makes it a convenient place to store data that needs to be accessible across multiple parts of the application, but not retained between requests.
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
 
