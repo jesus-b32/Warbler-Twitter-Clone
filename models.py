@@ -110,6 +110,8 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
+    #like we hold a list of messages objects
+    #the relation with Like table append current user id and message id
     likes = db.relationship(
         'Message',
         secondary="likes"
@@ -214,6 +216,13 @@ class Message(db.Model):
 
     def __repr__(self):
         return f"<Message #{self.id}: {self.text}, {self.user_id}>"
+
+    
+    def is_liked(self, user):
+        """Check if current message is in a user's liked list"""
+
+        found_liked_msg = [msg for msg in user.likes if msg == self]
+        return len(found_liked_msg) == 1
     
 def connect_db(app):
     """Connect this database to provided Flask app.

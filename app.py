@@ -103,7 +103,7 @@ def login():
 
     if form.validate_on_submit():
         user = User.authenticate(form.username.data,
-                                 form.password.data)
+                                form.password.data)
 
         if user:
             do_login(user)
@@ -258,6 +258,42 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+
+@app.route('/users/add_like/<int:message_id>', methods=["POST"])
+def register_user_likes(message_id):
+    """Add cliked message to this user like list."""
+    
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = g.user
+    message = Message.query.get_or_404(message_id)
+    
+    if message.user_id != user.id:
+        if message in user.likes:
+            user.likes.remove(message)
+        else:          
+            user.likes.append(message)
+        
+        db.session.commit()    
+        
+    print("message i liked: ", user.likes)
+    return redirect(url_for('homepage'))
+
+
+@app.route('/users/<int:user_id>/likes')
+def show_likes(user_id):
+    """Show list of warbles this user ."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    
+    return render_template('users/likes.html', user=user)
 
 
 ##############################################################################
