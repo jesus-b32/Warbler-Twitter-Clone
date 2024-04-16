@@ -279,7 +279,7 @@ def register_user_likes(message_id):
         
         db.session.commit()    
         
-    print("message i liked: ", user.likes)
+    # print("message i liked: ", user.likes)
     return redirect(url_for('homepage'))
 
 
