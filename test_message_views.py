@@ -75,19 +75,121 @@ class MessageViewTestCase(TestCase):
         # Since we need to change the session to mimic logging in,
         # we need to use the changing-session trick:
 
+        # with app.app_context():
+        with self.client as c:
+            #adding user.id to session to mimic a logged in user
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1_id
+
+            # Now, that session setting is saved, so we can have
+            # the rest of ours test
+            resp = c.post("/messages/new", data={"text": "Hello"})
+
+            # Make sure it redirects
+            self.assertEqual(resp.status_code, 302)
+
+            msg = Message.query.one()
+            self.assertEqual(msg.text, "Hello")
+                
+    def test_add_no_session(self):
+        """Test add message when user id is not logged into session"""
+
+        with self.client as c:
+            resp = c.post("/messages/new", data={"text": "Hello"}, follow_redirects=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Access unauthorized", str(resp.data))
+
+    def test_add_invalid_user(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = 987434  # user does not exist
+
+            resp = c.post("/messages/new",
+                        data={"text": "Hello"}, follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Access unauthorized", str(resp.data))                
+                
+    def test_message_show(self):
+        """Display  message"""
+
+        # Since we need to change the session to mimic logging in,
+        # we need to use the changing-session trick:
         with app.app_context():
-            user = User.query.get_or_404(self.user1_id)
+            message = Message(text="Testing Message View Function!", user_id=self.user1_id)
+            
+            db.session.add(message)
+            db.session.commit()
+            
+            #adding user.id to session to mimic a logged in user
             with self.client as c:
                 with c.session_transaction() as sess:
-                    sess[CURR_USER_KEY] = user.id
+                    sess[CURR_USER_KEY] = self.user1_id
 
-                # Now, that session setting is saved, so we can have
-                # the rest of ours test
+                resp = c.get(f"/messages/{message.id}")
 
-                resp = c.post("/messages/new", data={"text": "Hello"})
+                self.assertEqual(resp.status_code, 200)
+                self.assertIn(message.text, str(resp.data))            
 
-                # Make sure it redirects
-                self.assertEqual(resp.status_code, 302)
+    # def test_invalid_message_show(self):
+    #     with self.client as c:
+    #         with c.session_transaction() as sess:
+    #             sess[CURR_USER_KEY] = self.user1_id
 
-                msg = Message.query.one()
-                self.assertEqual(msg.text, "Hello")
+    #         resp = c.get('/messages/99999999')
+
+    #         self.assertEqual(resp.status_code, 404)
+
+    def test_message_delete(self):
+        with app.app_context():
+            message = Message(
+                text="Testing delete message",
+                user_id=self.user1_id
+            )
+            db.session.add(message)
+            db.session.commit()
+
+            #adding user.id to session to mimic a logged in user
+            with self.client as c:
+                with c.session_transaction() as sess:
+                    sess[CURR_USER_KEY] = self.user1_id
+
+                resp = c.post(f"/messages/{message.id}/delete", follow_redirects=True)
+                self.assertEqual(resp.status_code, 200)
+
+                message = Message.query.get(message.id)
+                self.assertIsNone(message)
+                
+                
+    # def test_unauthorized_message_delete(self):
+    #     # A second user that will try to delete the message
+    #     with app.app_context():
+    #         user2 = User.signup(username="unauthorized-user",
+    #                         email="testtest@test.com",
+    #                         password="password",
+    #                         image_url=None)
+
+    #         # Message is owned by user1
+    #         message = Message(
+    #             id = 200,
+    #             text="a test message",
+    #             user_id=self.user1_id
+    #         )
+    #         db.session.add_all([user2, message])
+    #         db.session.commit()
+
+    #         print("Message: ", message)
+    #         with self.client as c:
+    #             with c.session_transaction() as sess:
+    #                 sess[CURR_USER_KEY] = user2.id
+
+    #             resp = c.post(f"/messages/200/delete", follow_redirects=True)
+    #             self.assertEqual(resp.status_code, 200)
+    #             # self.assertIn("Access unauthorized.", str(resp.data))
+    #             print("Message after POST: ", message)
+    #             print("Message ID after POST: ", message.id)
+    #             m = Message.query.get(200)
+    #             print("M after POST: ", m)
+    #             print("user1 ID: ", self.user1_id)
+    #             print("user2 ID: ", user2.id)
+    #             self.assertEqual(m, message)
