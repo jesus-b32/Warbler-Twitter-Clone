@@ -47,13 +47,13 @@ def add_user_to_g():
 
 
 def do_login(user):
-    """Log in user."""
+    """Log in user. Store user ID in session"""
 
     session[CURR_USER_KEY] = user.id
 
 
 def do_logout():
-    """Logout user."""
+    """Logout user. Remove user id from session"""
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
@@ -64,9 +64,7 @@ def signup():
     """Handle user signup.
 
     Create new user and add to DB. Redirect to home page.
-
     If form not valid, present form.
-
     If the there already is a user with that username: flash message
     and re-present form.
     """
@@ -128,9 +126,9 @@ def logout():
 
 @app.route('/users')
 def list_users():
-    """Page with listing of users.
+    """Search page with listing of users.
 
-    Can take a 'q' param in querystring to search by that username.
+    Can take a 'q' parameter in querystring to search by that username.
     """
 
     search = request.args.get('q')
@@ -207,7 +205,7 @@ def stop_following(follow_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    followed_user = User.query.get(follow_id)
+    followed_user = User.query.get_or_404(follow_id)
     g.user.following.remove(followed_user)
     db.session.commit()
 
@@ -279,7 +277,6 @@ def register_user_likes(message_id):
         
         db.session.commit()    
         
-    # print("message i liked: ", user.likes)
     return redirect(url_for('homepage'))
 
 
@@ -302,7 +299,6 @@ def show_likes(user_id):
 @app.route('/messages/new', methods=["GET", "POST"])
 def messages_add():
     """Add a message:
-
     Show form if GET. If valid, update message and redirect to user page.
     """
 
@@ -326,7 +322,7 @@ def messages_add():
 def messages_show(message_id):
     """Show a message."""
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
     return render_template('messages/show.html', message=msg)
 
 
@@ -338,7 +334,7 @@ def messages_destroy(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
     db.session.delete(msg)
     db.session.commit()
 
@@ -359,11 +355,6 @@ def homepage():
 
     if g.user:
         user = g.user
-        
-        #list of user's messages.
-        #can access message id, text, timestamp & user_id columns
-        user_messages = user.messages
-        print("Here are my messages: ", user_messages)
 
         #list of users current user is following.
         #can access message id, username, emai, messages, etc..        

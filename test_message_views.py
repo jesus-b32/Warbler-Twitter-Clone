@@ -56,7 +56,6 @@ class MessageViewTestCase(TestCase):
                                         password="HASHED_PASSWORD",
                                         image_url=None)
 
-            db.session.add(user1)
             db.session.commit()
             
             self.user1_id = user1.id
@@ -91,8 +90,8 @@ class MessageViewTestCase(TestCase):
             msg = Message.query.one()
             self.assertEqual(msg.text, "Hello")
                 
-    def test_add_no_session(self):
-        """Test add message when user id is not logged into session"""
+    def test_add_unauthorized(self):
+        """Test add message when user id is not logged in"""
 
         with self.client as c:
             resp = c.post("/messages/new", data={"text": "Hello"}, follow_redirects=True)
@@ -131,14 +130,14 @@ class MessageViewTestCase(TestCase):
                 self.assertEqual(resp.status_code, 200)
                 self.assertIn(message.text, str(resp.data))            
 
-    # def test_invalid_message_show(self):
-    #     with self.client as c:
-    #         with c.session_transaction() as sess:
-    #             sess[CURR_USER_KEY] = self.user1_id
+    def test_invalid_message_show(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1_id
 
-    #         resp = c.get('/messages/99999999')
+            resp = c.get('/messages/78377')
 
-    #         self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.status_code, 404)
 
     def test_message_delete(self):
         with app.app_context():
@@ -161,35 +160,22 @@ class MessageViewTestCase(TestCase):
                 self.assertIsNone(message)
                 
                 
-    # def test_unauthorized_message_delete(self):
-    #     # A second user that will try to delete the message
-    #     with app.app_context():
-    #         user2 = User.signup(username="unauthorized-user",
-    #                         email="testtest@test.com",
-    #                         password="password",
-    #                         image_url=None)
+    def test_unauthorized_message_delete(self):
+        
+        with app.app_context():
+            message = Message(
+                id = 200,
+                text="a test message",
+                user_id=self.user1_id
+            )
+            db.session.add(message)
+            db.session.commit()
 
-    #         # Message is owned by user1
-    #         message = Message(
-    #             id = 200,
-    #             text="a test message",
-    #             user_id=self.user1_id
-    #         )
-    #         db.session.add_all([user2, message])
-    #         db.session.commit()
+            print("Message: ", message)
+            with self.client as c:
 
-    #         print("Message: ", message)
-    #         with self.client as c:
-    #             with c.session_transaction() as sess:
-    #                 sess[CURR_USER_KEY] = user2.id
-
-    #             resp = c.post(f"/messages/200/delete", follow_redirects=True)
-    #             self.assertEqual(resp.status_code, 200)
-    #             # self.assertIn("Access unauthorized.", str(resp.data))
-    #             print("Message after POST: ", message)
-    #             print("Message ID after POST: ", message.id)
-    #             m = Message.query.get(200)
-    #             print("M after POST: ", m)
-    #             print("user1 ID: ", self.user1_id)
-    #             print("user2 ID: ", user2.id)
-    #             self.assertEqual(m, message)
+                resp = c.post(f"/messages/200/delete", follow_redirects=True)
+                self.assertEqual(resp.status_code, 200)
+                self.assertIn("Access unauthorized.", str(resp.data))
+                m = Message.query.get(200)
+                self.assertEqual(m, message)

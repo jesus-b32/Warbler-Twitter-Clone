@@ -53,7 +53,6 @@ class UserModelTestCase(TestCase):
 
             user2 = User.signup("testuser2", "test2@test.com", "HASHED_PASSWORD", None)
 
-            db.session.add_all([user1, user2])
             db.session.commit()
             
             self.user1_id = user1.id        

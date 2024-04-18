@@ -214,7 +214,7 @@ class UserViewTestCase(TestCase):
 
     def test_register_user_like(self):
         with app.app_context():
-            message = Message(text="The earth is round", user_id=self.user1_id)
+            message = Message(text="Test test 123.", user_id=self.user1_id)
             db.session.add(message)
             db.session.commit()
 

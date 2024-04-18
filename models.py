@@ -110,7 +110,7 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
-    #like we hold a list of messages objects
+    #like will hold a list of messages objects.
     #the relation with Like table append current user id and message id
     likes = db.relationship(
         'Message',

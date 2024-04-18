@@ -5,7 +5,7 @@
 #    python -m unittest test_user_model.py
 
 
-# import os
+import os
 from unittest import TestCase
 from sqlalchemy import exc
 from models import db, User, Message, Follows, Likes
@@ -15,13 +15,13 @@ from models import db, User, Message, Follows, Likes
 # before we import our app, since that will have already
 # connected to the database
 
-# os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
+os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
 
 # Now we can import app
 
 from app import app
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///warbler-test'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///warbler-test'
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['TESTING'] = True
 
@@ -53,7 +53,6 @@ class MessageModelTestCase(TestCase):
 
             user2 = User.signup("testuser2", "test2@test.com", "HASHED_PASSWORD", None)
 
-            db.session.add_all([user1, user2])
             db.session.commit()
             
             self.user1_id = user1.id        
@@ -75,8 +74,7 @@ class MessageModelTestCase(TestCase):
             user = User.query.get_or_404(self.user1_id)
             message = Message(
                 text="Testing Message Model!",
-                user_id=user.id
-            )
+                user_id=user.id)
 
             db.session.add(message)
             db.session.commit()
@@ -84,7 +82,7 @@ class MessageModelTestCase(TestCase):
             # User should have no messages & no followers
             self.assertEqual(len(user.messages), 1)
             self.assertEqual(user.messages[0].text, "Testing Message Model!")
-            self.assertEqual(user.messages[0].user_id, user.id)
+            self.assertEqual(user.messages[0].user_id, self.user1_id)
 
     def test_message_is_liked(self):
         """Testing Message is liked method"""
