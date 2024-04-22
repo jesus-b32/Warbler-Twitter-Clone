@@ -239,7 +239,7 @@ def profile():
         db.session.commit()
         return redirect(url_for('users_show', user_id=user.id))
 
-    return render_template('users/edit.html', form=form, user_id=user.id)    
+    return render_template('users/edit.html', form=form, user_id=g.user.id)    
 
 
 @app.route('/users/delete', methods=["POST"])
